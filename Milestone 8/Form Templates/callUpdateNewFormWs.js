@@ -1,6 +1,6 @@
 // PROCESS NAME for TEMPLATE NAME
 
-const webServiceName = 'CreateFormBM8WS';
+const webServiceName = 'UpdateFormBM8WS';
 const formName = '8A_Milestone';
 let message; // the message is set below
 
@@ -49,11 +49,10 @@ $.when(CallServerSide())
         } else if (resp.meta.status == '200') {
             if (resp.data[0] != undefined) {
                 if (resp.data[0] == 'Success') {
-                    message = formName + ' has been saved successfully.' + 'And a new form record of template B with id: ' + resp.data[2] + ' has been created';
+                    message = resp.data[2] + ' has been updated successfully.';
 
                     // HANDLE SUCCESS RESPONSE HERE
-                    console.log('The FormB ID value is: ', resp.data[2]);
-                    VV.Form.SetFieldValue('FormB ID', resp.data[2], true);
+
                     // Alway use .then for waiting for the form to save before running another function
                     VV.Form.DoAjaxFormSave();
                 } else if (resp.data[0] == 'Error') {

@@ -1,4 +1,3 @@
-const { resolve, reject } = require('q');
 const logger = require('../log');
 
 module.exports.getCredentials = function () {
@@ -14,15 +13,11 @@ module.exports.getCredentials = function () {
 
 module.exports.main = async function (ffCollection, vvClient, response) {
     /*
-    Script Name:    WebService name 
-    Customer:       Project Name
-    Purpose:        Brief description of the purpose of the script
-    Preconditions:
-                    - List of libraries, form, queries, etc. that must exist in order this code to run
-                    - You can also list other preconditions as users permissions, environments, etc
-    Parameters:     The following represent variables passed into the function:
-                    parameter1: Description of parameter1
-                    parameter2: Description of parameter2
+    Script Name:    UpdateFormBM8WS
+    Customer:       Sandbox
+    Purpose:        This Web Service update just the [Field to Update] field of a form record of template 8B_Milestone
+    Preconditions: none
+    Parameters:     none
     Return Object:
                     outputCollection[0]: Status
                     outputCollection[1]: Short description message
@@ -53,14 +48,12 @@ module.exports.main = async function (ffCollection, vvClient, response) {
     /* -------------------------------------------------------------------------- */
     /*                           Configurable Variables                           */
     /* -------------------------------------------------------------------------- */
-    const getTemplateName = `8_Milestone`;
-    const postNewFormTemplateName = '8B_Milestone';
+    const templateName = '8B_Milestone';
     /* -------------------------------------------------------------------------- */
     /*                          Script 'Global' Variables                         */
     /* -------------------------------------------------------------------------- */
 
     // Description used to better identify API methods errors
-    let shortDescription = '';
 
     /* -------------------------------------------------------------------------- */
     /*                              Helper Functions                              */
@@ -199,16 +192,16 @@ module.exports.main = async function (ffCollection, vvClient, response) {
         return vvClientRes;
     }
 
-    function getFormData(formIDvariable) {
-        const shortDescription = `Get form ${formIDvariable}`;
+    function getFormData(formID) {
+        const shortDescription = `Get form ${formID}`;
 
         const getFormsParams = {
-            q: `[Form ID] eq '${formIDvariable}'`,
+            q: `[Form ID] eq '${formID}'`,
             expand: true, // true to get all the form's fields
             // fields: "Name,Last Name,Phone,City", // to get only the fields 'id' and 'name'
         };
         return vvClient.forms
-            .getForms(getFormsParams, getTemplateName)
+            .getForms(getFormsParams, templateName)
             .then((res) => parseRes(res))
             .then((res) => checkMetaAndStatus(res, shortDescription))
             .then((res) => checkDataPropertyExists(res, shortDescription))
@@ -216,15 +209,14 @@ module.exports.main = async function (ffCollection, vvClient, response) {
             .then((res) => res.data[0]);
     }
 
-    function postFormData(formResponse) {
-        const shortDescription = `Post form ${postNewFormTemplateName}`;
-        const newFormData = {
-            Name: formResponse.name,
-            ['Company Name']: formResponse.company,
-            ['Field to Update']: 'This is a mock value',
+    function updateFormData(formGUID) {
+        const shortDescription = `Update form ${formGUID}`;
+        const formFieldsToUpdate = {
+            ['Field to Update']: 'Updated By Reptyl',
         };
+
         return vvClient.forms
-            .postForms(null, newFormData, postNewFormTemplateName)
+            .postFormRevision(null, formFieldsToUpdate, templateName, formGUID)
             .then((res) => parseRes(res))
             .then((res) => checkMetaAndStatus(res, shortDescription))
             .then((res) => checkDataPropertyExists(res, shortDescription))
@@ -237,7 +229,7 @@ module.exports.main = async function (ffCollection, vvClient, response) {
 
     try {
         // GET THE VALUES OF THE FIELDS
-        const formID = getFieldValueByName('Form ID');
+        const formID = getFieldValueByName('FormB ID');
 
         // CHECKS IF THE REQUIRED PARAMETERS ARE PRESENT
 
@@ -247,12 +239,13 @@ module.exports.main = async function (ffCollection, vvClient, response) {
         }
 
         // YOUR CODE GOES HERE
+
         const formData = await getFormData(formID);
-        const postData = await postFormData(formData);
+        const postData = await updateFormData(formData.dhid1);
         // BUILD THE SUCCESS RESPONSE ARRAY
 
         outputCollection[0] = 'Success'; // Don´t change this
-        outputCollection[1] = 'The form record was created';
+        outputCollection[1] = 'The form record was updated';
         outputCollection[2] = postData.data.instanceName;
     } catch (error) {
         logger.info('Error encountered' + error);
