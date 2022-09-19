@@ -1,7 +1,7 @@
 // PROCESS NAME for TEMPLATE NAME
 
-const webServiceName = 'CreateFormBM8WS';
-const formName = '8A_Milestone';
+const webServiceName = 'RelateFormsM9WS';
+const formName = '9A_Milestone';
 let message; // the message is set below
 
 VV.Form.ShowLoadingPanel();
@@ -49,11 +49,10 @@ $.when(CallServerSide())
         } else if (resp.meta.status == '200') {
             if (resp.data[0] != undefined) {
                 if (resp.data[0] == 'Success') {
-                    message = formName + ' has been saved successfully.' + 'And a new form record of template B with id: ' + resp.data[2] + ' has been created';
+                    message = formName + ' has been saved successfully.' + resp.data[2] + ' and ' + resp.data[3] + ' has been related.';
 
                     // HANDLE SUCCESS RESPONSE HERE
-                    console.log('The FormB ID value is: ', resp.data[2]);
-                    VV.Form.SetFieldValue('FormB ID', resp.data[2], true).then(() => VV.Form.DoAjaxFormSave());
+                    VV.Form.SetFieldValue('testID', resp.data[3], true).then(() => VV.Form.DoAjaxFormSave());
                     // Alway use .then for waiting for the form to save before running another function
                 } else if (resp.data[0] == 'Error') {
                     message = 'An error was encountered. ' + resp.data[1];
