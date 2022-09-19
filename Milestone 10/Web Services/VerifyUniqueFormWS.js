@@ -13,22 +13,26 @@ module.exports.getCredentials = function () {
 
 module.exports.main = async function (ffCollection, vvClient, response) {
     /*
-    Script Name:    RelateFormsM9WS
-    Customer:       Sandbox
-    Purpose:        This Web Service relate the current form record with another one that already exists
-    Preconditions: none
-    Parameters:     none
+    Script Name:    WebService name 
+    Customer:       Project Name
+    Purpose:        Brief description of the purpose of the script
+    Preconditions:
+                    - List of libraries, form, queries, etc. that must exist in order this code to run
+                    - You can also list other preconditions as users permissions, environments, etc
+    Parameters:     The following represent variables passed into the function:
+                    parameter1: Description of parameter1
+                    parameter2: Description of parameter2
     Return Object:
                     outputCollection[0]: Status
                     outputCollection[1]: Short description message
+                    outputCollection[2]: Data
     Pseudo code: 
-                    1° Get from the current form field collection two fields Form ID and Fist Name
-                    2° Get the data of the current form (parentForm) using getForms and filtering by Form ID
-                    3° Get the data of the form record (childForm) that is going to be related using getForms and filtering by Fist Name value
-                    4° Relate the form records by using relateFormByDocId vvClient method                    ...
+                    1° Does this
+                    2° Does that
+                    ...
  
-    Date of Dev:    09/16/2022
-    Last Rev Date:  09/16/2022
+    Date of Dev:    10/19/2021
+    Last Rev Date:  10/19/2021
  
     Revision Notes:
                     07/30/2021 - DEVELOPER NAME HERE:  First Setup of the script
@@ -48,10 +52,8 @@ module.exports.main = async function (ffCollection, vvClient, response) {
     /* -------------------------------------------------------------------------- */
     /*                           Configurable Variables                           */
     /* -------------------------------------------------------------------------- */
-    const currentTemplateName = '9A_Milestone';
-    const templateToRelateName = '9B_Milestone';
-    const childRelatedformFieldName = 'testID';
-    const parentRelatedformFieldName = 'Parent Form';
+    const currentTemplateName = '10_Milestone';
+
     /* -------------------------------------------------------------------------- */
     /*                          Script 'Global' Variables                         */
     /* -------------------------------------------------------------------------- */
@@ -153,6 +155,7 @@ module.exports.main = async function (ffCollection, vvClient, response) {
             ignoreStatusCode: An integer status code for which no error should be thrown. If you're using checkMeta(), make sure to pass the same param as well.
         */
         const status = vvClientRes.meta.status;
+
         if (status != ignoreStatusCode) {
             // If the data property doesn't exist, throw an error
             if (!vvClientRes.data) {
@@ -195,90 +198,60 @@ module.exports.main = async function (ffCollection, vvClient, response) {
         return vvClientRes;
     }
 
-    function getCurrentFormData(formID) {
-        const shortDescription = `Get form ${formID}`;
-
-        const getFormsParams = {
-            q: `[Form ID] eq '${formID}'`,
-            expand: true, // true to get all the form's fields
-            // fields: "Name,Last Name,Phone,City", // to get only the fields 'id' and 'name'
-        };
-        return vvClient.forms
-            .getForms(getFormsParams, currentTemplateName)
-            .then((res) => parseRes(res))
-            .then((res) => checkMetaAndStatus(res, shortDescription))
-            .then((res) => checkDataPropertyExists(res, shortDescription))
-            .then((res) => checkDataIsNotEmpty(res, shortDescription))
-            .then((res) => res.data[0]);
-    }
-
-    function getFormToRelateData(name) {
-        const shortDescription = `Get form where name is: ${name}`;
-
-        const getFormsParams = {
-            q: `[Name] eq '${name}'`,
-            expand: true, // true to get all the form's fields
-            // fields: "Name,Last Name,Phone,City", // to get only the fields 'id' and 'name'
-        };
-        return vvClient.forms
-            .getForms(getFormsParams, templateToRelateName)
-            .then((res) => parseRes(res))
-            .then((res) => checkMetaAndStatus(res, shortDescription))
-            .then((res) => checkDataPropertyExists(res, shortDescription))
-            .then((res) => checkDataIsNotEmpty(res, shortDescription))
-            .then((res) => res.data[0]); // Podrian ser varios resultados
-    }
-
-    function relateForms(parentGUID, childFormID) {
-        // GET THE PARENT GUID
-        const shortDescription = `relating forms: ${parentGUID} and form ${childFormID}`;
-
-        return vvClient.forms
-            .relateFormByDocId(parentGUID, childFormID)
-            .then((res) => parseRes(res))
-            .then((res) => checkMetaAndStatus(res, shortDescription));
-    }
-
-    function updateRelatedFormIDValue(formID, relatedFormID, templateName, fieldName) {
-        const shortDescription = `Update form ${formID} of template ${templateName}`;
-        const formFieldsToUpdate = {
-            [fieldName]: relatedFormID,
-        };
-
-        return vvClient.forms
-            .postFormRevision(null, formFieldsToUpdate, templateName, formID)
-            .then((res) => parseRes(res))
-            .then((res) => checkMetaAndStatus(res, shortDescription))
-            .then((res) => checkDataPropertyExists(res, shortDescription))
-            .then((res) => checkDataIsNotEmpty(res, shortDescription));
-    }
-
     /* -------------------------------------------------------------------------- */
     /*                                  MAIN CODE                                 */
     /* -------------------------------------------------------------------------- */
 
     try {
         // GET THE VALUES OF THE FIELDS
-        const formID = getFieldValueByName('Form ID');
-        const nameFormFieldValueOnParent = getFieldValueByName('First Name');
+        const email = getFieldValueByName('Email');
+        const FormID = getFieldValueByName('REVISIONID');
+
         // CHECKS IF THE REQUIRED PARAMETERS ARE PRESENT
 
-        if (!formID) {
+        if (!email || !FormID) {
             // Throw every error getting field values as one
             throw new Error(errorLog.join('; '));
         }
 
         // YOUR CODE GOES HERE
+        const emailSearch = email.replace(/'/g, "\\'");
 
-        const { dhid1: parentRevisionId, instanceName: parentFormID } = await getCurrentFormData(formID);
-        const { dhid1: childRevisionId, dhdocid1: childFormID } = await getFormToRelateData(nameFormFieldValueOnParent);
-        await relateForms(parentRevisionId, childFormID);
-        await updateRelatedFormIDValue(childRevisionId, parentFormID, templateToRelateName, parentRelatedformFieldName);
-        // BUILD THE SUCCESS RESPONSE ARRAY
-        outputCollection[0] = 'Success'; // Don´t change this
-        outputCollection[1] = 'The form records were related successfully';
-        outputCollection[2] = parentFormID;
-        outputCollection[3] = childFormID;
+        const uniqueRecordArr = [
+            {
+                name: 'templateId',
+                value: currentTemplateName,
+            },
+            {
+                name: 'query',
+                value: `[Email] eq '${emailSearch}'`,
+            },
+            {
+                name: 'formId',
+                value: FormID,
+            },
+        ];
+
+        const shortDescription = `Executing LibFormVerifyUniqueRecord for '${email}'`;
+        const verifyUniqueResp = await vvClient.scripts
+            .runWebService('LibFormVerifyUniqueRecord', uniqueRecordArr)
+            .then((res) => parseRes(res))
+            .then((res) => checkMetaAndStatus(res, shortDescription))
+            .then((res) => checkDataPropertyExists(res, shortDescription))
+            .then((res) => checkDataIsNotEmpty(res, shortDescription));
+
+        const verifyUniqueStatus = verifyUniqueResp.data['status'];
+
+        if (verifyUniqueStatus === 'Not Unique') {
+            throw new Error('This form record record is a duplicate of another Record. Another form record already exists with the email');
+        }
+        //build the return object if the form is unique or unique matched that are the conditions in which the form should be saved
+
+        if (verifyUniqueStatus == 'Unique' || verifyUniqueStatus == 'Unique Matched') {
+            outputCollection[0] = 'Success';
+            outputCollection[1] = `Unique, this form is '${verifyUniqueStatus}'`;
+            outputCollection[2] = verifyUniqueStatus;
+        }
     } catch (error) {
         logger.info('Error encountered' + error);
 
@@ -294,6 +267,7 @@ module.exports.main = async function (ffCollection, vvClient, response) {
         }
     } finally {
         // SEND THE RESPONSE
+
         response.json(200, outputCollection);
     }
 };
